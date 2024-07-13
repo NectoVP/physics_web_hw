@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Птицын Влад ДЗ М3203</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #input-container { text-align: center; margin-top: 20px; }
+        #input-container div { margin-bottom: 10px; }
+        #graph-container { width: 500px; height: 500px; margin: 0 auto; }
+        .graph { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="input-container">
+        <div>
+            <label for="Amp1">Амплитуда первого колебания, В: </label>
+            <input type="number" id="Amp1" class="Amp1" value="10">
+        </div>
+        <div>
+            <label for="Amp2">Амплитуда второго колебания, В: </label>
+            <input type="number" id="Amp2" class="Amp2" value="10">
+        </div>
+        <div>
+            <label for="Freq1">Частота первого колебания, Гц:</label>
+            <input type="number" id="Freq1" class="Freq1" value="5">
+        </div>
+        <div>
+            <label for="Freq2">Частота второго колебания, Гц:</label>
+            <input type="number" id="Freq2" class="Freq2" value="5">
+        </div>
+        <div>
+            <label for="Angle">Сдвиг фаз колебаний, Рад:</label>
+            <input type="number" id="Angle" class="Angle" value="5">
+        </div>
+        <div>
+            <button>Построить график</button>
+        </div>
+    </div>
+
+    <div id="graph-container">
+        <div class="graph" id="graph"></div>
+    </div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        document.querySelector('button').onclick = updateGraph;
+
+        function updateGraph() {
+        
+            let freq1 = parseFloat(document.querySelector('.Freq1').value);
+            let freq2 = parseFloat(document.querySelector('.Freq2').value);
+            let amp1 = parseFloat(document.querySelector('.Amp1').value);
+            let amp2 = parseFloat(document.querySelector('.Amp2').value);
+            let angle = parseFloat(document.querySelector('.Angle').value);
+            
+            if (isNaN(freq1) || freq1 <= 0 || isNaN(freq2) || freq2 <= 0 || isNaN(amp1) || amp1 < 0 || isNaN(amp2) || amp2 < 0 || isNaN(angle) || angle < 0) {
+                alert("введены некорректные значения");
+                return;
+            }
+
+            let k = 0.001;
+            let max = Math.PI * 4;
+
+            const xValues = [];
+            const yValues = [];
+
+            for (let i = 0; i < max; i+=k) {
+                xValues.push(amp1 * Math.sin(freq1 * i + angle));
+                yValues.push(amp2 * Math.sin(freq2 * i));
+            }
+
+            Plotly.newPlot('graph', [{
+                x: xValues,
+                y: yValues,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'red', shape: 'spline' }
+            }], {
+                title: 'Фигура Лиссажу',
+                xaxis: { title: { text: 'Угол, рад' }, scaleanchor: 'y', scaleratio: 1 },
+                yaxis: { title: { text: 'Амплитуда, В' }, scaleanchor: 'x', scaleratio: 1 },
+            });
+        }
+        updateGraph();
+    </script>
+</body>
+</html>

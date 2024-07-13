@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Птицын Влад ДЗ М3203</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        .slider-container { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); display: flex; }
+        .slider-container > div { margin-right: 10px; }
+        .slider { width: 100px; }
+        label { display: block; }
+        #graph-container { margin-top: 50px; }
+    </style>
+</head>
+<body>
+    <div class="slider-container">
+        <div>
+            <label for="inducSlider">Индуктивность (Гн): </label>
+            <input type="range" min="1" max="100" value="1" step="0.1" class="slider" id="inducSlider">
+            <span id="inducSliderv">1</span>
+        </div>
+        
+        <div>
+            <label for="capSlider">Емкость конденсатора (мФ): </label>
+            <input type="range" min="1" max="100" value="1" step="1" class="slider" id="capSlider">
+            <span id="capSliderv">1</span>
+        </div>
+        
+        <div>
+            <label for="resistSlider">Сопротивление контура (Ом): </label>
+            <input type="range" min="1" max="5" value="1" step="0.1" class="slider" id="resistSlider">
+            <span id="resistSliderv">1</span>
+        </div>
+        
+        <div>
+            <label for="chargeSlider">Изначальный заряд (Кл): </label>
+            <input type="range" min="-5" max="5" value="1" step="0.1" class="slider" id="chargeSlider">
+            <span id="chargeSliderv">1</span>
+        </div>
+    </div>
+
+    <div id="graph-container">
+        <div class="graph" id="graph"></div>
+        <div class="graph" id="graph2"></div>
+        <div class="graph" id="graph3"></div>
+    </div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        const inducSlider = document.getElementById('inducSlider');
+        const capSlider = document.getElementById('capSlider');
+        const resistSlider = document.getElementById('resistSlider');
+        const chargeSlider = document.getElementById('chargeSlider');
+
+        const inducValue = document.getElementById('inducSliderv');
+        const capValue = document.getElementById('capSliderv');
+        const resistValue = document.getElementById('resistSliderv');
+        const chargeValue = document.getElementById('chargeSliderv');
+
+        inducSlider.addEventListener('input', updateGraph);
+        capSlider.addEventListener('input', updateGraph);
+        resistSlider.addEventListener('input', updateGraph);
+        chargeSlider.addEventListener('input', updateGraph);
+
+        function updateGraph() {
+            const induc = parseFloat(inducSlider.value);
+            let cap = parseFloat(capSlider.value);
+            const resist = parseFloat(resistSlider.value);
+            const charge = parseFloat(chargeSlider.value);
+
+            inducValue.textContent = induc;
+            capValue.textContent = cap;
+            resistValue.textContent = resist;
+            chargeValue.textContent = charge;
+            
+            cap = cap * 10**(-3);
+
+            let b = resist/(2*induc);
+            let w0 = 1 / Math.sqrt(induc * cap);
+            let w = Math.sqrt(w0**2 - b**2);
+            const xValues = [];
+            const yValues = [];
+            for(let i = 0; i < 100; i++) {
+                xValues.push(i/10);
+                yValues.push(charge * Math.exp(-b * xValues[i]) * Math.cos(w * xValues[i]));
+            }
+            const xValues2 = [];
+            const yValues2 = [];
+            for(let i = 0; i < 100; i++) {
+                xValues2.push(i/10);
+                yValues2.push(-charge * Math.exp(-b * xValues2[i]) * (b * Math.cos(w * xValues2[i]) + w*Math.sin(w * xValues2[i])));
+            }
+            const xValues3 = [];
+            const yValues3 = [];
+            for(let i = 0; i < 100; i++) {
+                xValues3.push(i/10);
+                yValues3.push(yValues[i] / cap);
+            }
+
+            Plotly.newPlot('graph', [{
+                x: xValues,
+                y: yValues,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'purple', shape: 'spline' }
+            }], {
+                title: 'График зависимости силы заряда от времени',
+                xaxis: { title: { text: 'Время (сек)' } },
+                yaxis: { title: { text: 'Заряд (Кл)'} }
+            });
+            Plotly.newPlot('graph2', [{
+                x: xValues2,
+                y: yValues2,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'orange', shape: 'spline' }
+            }], {
+                title: 'График зависимости силы тока от времени.',
+                xaxis: { title: { text: 'Время (сек)' } },
+                yaxis: { title: { text: 'Сила тока (А)'} }
+            });
+            Plotly.newPlot('graph3', [{
+                x: xValues3,
+                y: yValues3,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'blue', shape: 'spline' }
+            }], {
+                title: 'График зависимости напряжения от времени.',
+                xaxis: { title: { text: 'Время (сек)' } },
+                yaxis: { title: { text: 'Напряжение (В)'} }
+            });
+        }
+        updateGraph();
+    </script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Птицын Влад ДЗ М3203</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        .slider-container { position: absolute; top: 10px; left: 10px; }
+        .slider { width: 150px; }
+        label { display: block; }
+        #graph-container { margin-top: 130px; }
+        .graph { float: left; width: 50%; }
+    </style>
+</head>
+<body>
+    <div class="slider-container">
+        <div>
+            <label for="magSlider">Величина магнитного поля (Вб): </label>
+            <input type="range" min="-10" max="100" value="1" step="0.1" class="slider" id="magSlider">
+            <span id="magSliderv">1</span>
+        </div>
+        
+        <div>
+            <label for="freqSlider">Частота вращения (c^-1): </label>
+            <input type="range" min="0" max="10" value="1" step="0.1" class="slider" id="freqSlider">
+            <span id="freqSliderv">1</span>
+        </div>
+        
+        <div>
+            <label for="resistSlider">Сопротивление контура (Ом): </label>
+            <input type="range" min="1" max="100" value="1" step="1" class="slider" id="resistSlider">
+            <span id="resistSliderv">1</span>
+        </div>
+    </div>
+
+    <div id="graph-container">
+        <div class="graph" id="graph"></div>
+        <div class="graph" id="graph2"></div>
+    </div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        const magSlider = document.getElementById('magSlider');
+        const freqSlider = document.getElementById('freqSlider');
+        const resistSlider = document.getElementById('resistSlider');
+
+        const magValue = document.getElementById('magSliderv');
+        const freqValue = document.getElementById('freqSliderv');
+        const resistValue = document.getElementById('resistSliderv');
+
+        magSlider.addEventListener('input', updateGraph);
+        freqSlider.addEventListener('input', updateGraph);
+        resistSlider.addEventListener('input', updateGraph);
+
+        function updateGraph() {
+            const mag = parseFloat(magSlider.value);
+            const freq = parseFloat(freqSlider.value);
+            const resist = parseFloat(resistSlider.value);
+
+            magValue.textContent = mag;
+            freqValue.textContent = freq;
+            resistValue.textContent = resist;
+
+            const xValues = [];
+            const yValues = [];
+            for(let i = 0; i < 500; i++) {
+                xValues.push(i / 100);
+                yValues.push(mag * freq * 2 * Math.PI * Math.sin(i / 100 * 2 * Math.PI * freq));
+            }
+
+            const xValues2 = [];
+            const yValues2 = [];
+            for(let i = 0; i < 500; i++) {
+                xValues2.push(i / 100);
+                yValues2.push(yValues[i] / resist * Math.sin(i / 100 * 2 * Math.PI * freq));
+            }
+
+            Plotly.newPlot('graph', [{
+                x: xValues,
+                y: yValues,
+                type: 'scatter',
+                mode: 'lines',
+                line: { shape: 'spline' }
+            }], {
+                title: 'График зависимости эдс',
+                xaxis: { title: { text: 'Время (сек)' } },
+                yaxis: { title: { text: 'ЭДС (В)'} }
+            });
+            Plotly.newPlot('graph2', [{
+                x: xValues2,
+                y: yValues2,
+                type: 'scatter',
+                mode: 'lines',
+                line: { shape: 'spline' }
+            }], {
+                title: 'График зависимости индукционного тока',
+                xaxis: { title: { text: 'Время (сек)' } },
+                yaxis: { title: { text: 'Im (В)' } }
+            });
+        }
+
+        updateGraph();
+    </script>
+</body>
+</html>

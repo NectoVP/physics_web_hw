@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Птицын Влад ДЗ М3203</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #input-container { text-align: center; margin-top: 20px; }
+        #input-container div { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div id="input-container">
+        <div>
+            <label for="Freq1">Частота несущего колебания, Гц: </label>
+            <input type="number" id="Freq1" class="Freq1" value="100">
+        </div>
+        <div>
+            <label for="Freq2">Частота информационного сигнала, Гц: </label>
+            <input type="number" id="Freq2" class="Freq2" value="10">
+        </div>
+        <div>
+            <label for="Amp">Амплитуда колебания, В</label>
+            <input type="number" id="Amp1" class="Amp1" value="5">
+        </div>
+        <div>
+            <button>Построить графики</button>
+        </div>
+    </div>
+
+    <div id="graph-container">
+        <div class="graph" id="graph"></div>
+        <div class="graph" id="graph2"></div>
+        <div class="graph" id="graph3"></div>
+        <div class="graph" id="graph4"></div>
+        <div class="graph" id="graph5"></div>
+        <div class="graph" id="graph6"></div>
+        <div class="graph" id="mydiv"></div>
+    </div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        document.querySelector('button').onclick = updateGraph;
+
+        function updateGraph() {
+        
+            let freq01 = parseFloat(document.querySelector('.Freq1').value);
+            let freq02 = parseFloat(document.querySelector('.Freq2').value);
+            
+            let freq1 = freq01 * (2 * Math.PI);
+            let freq2 = freq02 * (2 * Math.PI);
+
+            let amp1 = parseFloat(document.querySelector('.Amp1').value);            
+            
+            if (isNaN(freq1) || freq1 <= 0 || isNaN(freq2) || freq2 <= 0 || isNaN(amp1) || amp1 < 0) {
+                alert("введены некорректные значения");
+                return;
+            }
+
+            let k = 0.001;
+            let m = 1;
+
+            const xValues1 = [];
+            const yValues1 = [];
+
+            for (let i = 0; i < m; i+=k) {
+                xValues1.push(i);
+                yValues1.push(amp1*Math.cos(freq1*i));
+            }
+
+            const xValues2 = [];
+            const yValues2 = [];
+
+            for (let i = 0; i < m; i+=k) {
+                xValues2.push(i);
+                yValues2.push(amp1*Math.cos(freq2*i));
+            }
+        
+            const xValues3 = [];
+            const yValues3 = [];    
+            
+            for (let i = 0; i < m; i+=k) {
+                xValues3.push(i);
+                yValues3.push(amp1*(1 + Math.cos(freq2*i)) * Math.cos(freq1*i));
+            }
+
+            const spectr_x1 = [];
+            const spectr_y1 = [];
+
+            for(let i = -freq01*3; i <= freq01*3; ++i) {
+                spectr_x1.push(i);
+                if(i == -freq01) {
+                    spectr_y1.push(amp1);
+                }
+                else if(i == freq01) {
+                    spectr_y1.push(amp1);
+                }
+                else
+                    spectr_y1.push(0);
+            }
+
+            const spectr_x2 = [];
+            const spectr_y2 = [];
+
+            for(let i = -freq02*3; i <= freq02*3; ++i) {
+                spectr_x2.push(i);
+                if(i == -freq02)
+                    spectr_y2.push(amp1);
+                else if(i == freq02)
+                    spectr_y2.push(amp1);
+                else
+                    spectr_y2.push(0);
+            }
+
+            const spectr_x3 = [];
+            const spectr_y3 = [];
+
+            for(let i = -freq01*3; i <= freq01*3; ++i) {
+                spectr_x3.push(i);
+                if(i == -freq01-freq02) {
+                    spectr_y3.push(amp1/2);
+                }
+                else if(i == -freq01) {
+                    spectr_y3.push(amp1);
+                }
+                else if(i == -freq01+freq02) {
+                    spectr_y3.push(amp1/2);
+                }
+                if(i == freq01-freq02) {
+                    spectr_y3.push(amp1/2);
+                }
+                else if(i == freq01) {
+                    spectr_y3.push(amp1);
+                }
+                else if(i == freq01+freq02) {
+                    spectr_y3.push(amp1/2);
+                }
+                else
+                    spectr_y3.push(0);
+            }
+
+            Plotly.newPlot('graph', [{
+                x: xValues1,
+                y: yValues1,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'red', shape: 'spline' }
+            }], {
+                title: 'Несущий сигнал',
+                xaxis: { title: { text: 'Время, с' } },
+                yaxis: { title: { text: 'Амплитуда, В'} },
+            });
+            Plotly.newPlot('graph2', [{
+                x: xValues2,
+                y: yValues2,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'blue', shape: 'spline' }
+            }], {
+                title: 'Информационный сигнал',
+                xaxis: { title: { text: 'Время, с' } },
+                yaxis: { title: { text: 'Амплитуда, В'} },
+            });
+            Plotly.newPlot('graph3', [{
+                x: xValues3,
+                y: yValues3,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'green', shape: 'spline' }
+            }], {
+                title: 'Амплитудно модулированный сигнал',
+                xaxis: { title: { text: 'Время, с' } },
+                yaxis: { title: { text: 'Амплитуда, В'} },
+            });
+            Plotly.newPlot('graph4', [{
+                x: spectr_x1,
+                y: spectr_y1,
+                type: 'bar',
+                marker: {'color': 'red'},
+                width: 0.01,
+            }], {
+                title: 'Спектр несущего сигнала',
+                xaxis: { title: { text: 'Частота, Гц' } },
+                yaxis: { title: { text: 'Амплитуда, В' } },
+            });
+            Plotly.newPlot('graph5', [{
+                x: spectr_x2,
+                y: spectr_y2,
+                type: 'bar',
+                marker: {'color': 'blue'},
+                width: 0.01,
+            }], {
+                title: 'Спектр информационного сигнала',
+                xaxis: { title: { text: 'Частота, Гц' } },
+                yaxis: { title: { text: 'Амплитуда, В' } },
+            });
+            Plotly.newPlot('graph6', [{
+                x: spectr_x3,
+                y: spectr_y3,
+                type: 'bar',
+                marker: {'color': 'green'}, 
+                width: 0.01,
+            }], {
+                title: 'Спектр амплитудно модулированного сигнала',
+                xaxis: { title: { text: 'Частота, Гц' } },
+                yaxis: { title: { text: 'Амплитуда, В' } },
+            });
+        }
+        updateGraph();
+    </script>
+</body>
+</html>

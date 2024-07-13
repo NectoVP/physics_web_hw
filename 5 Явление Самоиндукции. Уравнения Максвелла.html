@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Птицын Влад ДЗ М3203</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        .slider-container { position: absolute; top: 10px; left: 10px; }
+        .slider { width: 150px; }
+        label { display: block; }
+        #graph-container { margin-top: 130px; }
+        .graph { float: left; width: 50%; }
+    </style>
+</head>
+<body>
+    <div class="slider-container">
+        <div>
+            <label for="inducSlider">Индуктивность (Гн): </label>
+            <input type="range" min="1" max="10" value="1" step="0.1" class="slider" id="inducSlider">
+            <span id="inducSliderv">1</span>
+        </div>
+        
+        <div>
+            <label for="EDS">ЭДС источника тока (В): </label>
+            <input type="range" min="1" max="10" value="1" step="0.1" class="slider" id="EDS">
+            <span id="EDSv">1</span>
+        </div>
+        
+        <div>
+            <label for="resistSlider">Сопротивление контура (Ом): </label>
+            <input type="range" min="1" max="100" value="1" step="1" class="slider" id="resistSlider">
+            <span id="resistSliderv">1</span>
+        </div>
+    </div>
+
+    <div id="graph-container">
+        <div class="graph" id="graph"></div>
+        <div class="graph" id="graph2"></div>
+    </div>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        const inducSlider = document.getElementById('inducSlider');
+        const EDS = document.getElementById('EDS');
+        const resistSlider = document.getElementById('resistSlider');
+
+        const inducValue = document.getElementById('inducSliderv');
+        const edsValue = document.getElementById('EDSv');
+        const resistValue = document.getElementById('resistSliderv');
+
+        inducSlider.addEventListener('input', updateGraph);
+        EDS.addEventListener('input', updateGraph);
+        resistSlider.addEventListener('input', updateGraph);
+
+        function updateGraph() {
+            const induc = parseFloat(inducSlider.value);
+            const eds = parseFloat(EDS.value);
+            const resist = parseFloat(resistSlider.value);
+
+            inducValue.textContent = induc;
+            edsValue.textContent = eds;
+            resistValue.textContent = resist;
+
+            const xValues = [];
+            const yValues = [];
+            for(let i = 0; i < 1000; i++) {
+                xValues.push(i / 100);
+                yValues.push(eds / resist * Math.exp(-resist/induc*xValues[i]));
+            }
+            const xValues2 = [];
+            const yValues2 = [];
+            for(let i = 0; i < 1000; i++) {
+                xValues2.push(i / 100);
+                yValues2.push(eds / resist * (1 - Math.exp(-resist/induc*xValues2[i])));
+            }
+
+            Plotly.newPlot('graph', [{
+                x: xValues,
+                y: yValues,
+                type: 'scatter',
+                mode: 'lines',
+                line: { shape: 'spline' }
+            }], {
+                title: 'График зависимости тока от времени при размыкании цепи.',
+                xaxis: { title: { text: 'Время (сек)' } },
+                yaxis: { title: { text: 'Сила тока (А)'} }
+            });
+            Plotly.newPlot('graph2', [{
+                x: xValues2,
+                y: yValues2,
+                type: 'scatter',
+                mode: 'lines',
+                line: { shape: 'spline' }
+            }], {
+                title: 'График зависимости тока от времени при замыкании цепи.',
+                xaxis: { title: { text: 'Время (сек)' } },
+                yaxis: { title: { text: 'Сила тока (А)'} }
+            });
+        }
+        updateGraph();
+    </script>
+</body>
+</html>

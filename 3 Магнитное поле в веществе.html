@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three.js Arrows Example</title>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; }
+    .menu {
+      position: absolute;
+      left: 10px;
+      top: 15%;
+      transform: translateY(-50%);
+    }
+    label {
+      color: white;
+    }
+    .sliderContainer {
+      display: flex;
+      align-items: center;
+    }
+    .sliderValue {
+      margin-left: 10px;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+    <div class="menu">
+        <button id="toggleCircle1">Проводник 1</button><br>
+        <button id="toggleCircle2">Проводник 2</button><br>
+        <button id="toggleCircle3">Проводник 3</button><br>
+        <button id="toggleCircle4">Проводник 4</button><br>
+        
+        <div class="sliderContainer">
+          <label for="slider1">Сила тока на первом проводнике:</label>
+          <input type="range" min="-10" max="10" value="1" step="0.1" id="slider1">
+          <div id="slider1Value" class="sliderValue">1</div>
+        </div>
+        
+        <div class="sliderContainer">
+          <label for="slider2">Сила тока на втором проводнике:</label>
+          <input type="range" min="-10" max="10" value="1" step="0.1" id="slider2">
+          <div id="slider2Value" class="sliderValue">1</div>
+        </div>
+        
+        <div class="sliderContainer">
+          <label for="slider3">Сила тока на третьем проводнике:</label>
+          <input type="range" min="-10" max="10" value="1" step="0.1" id="slider3">
+          <div id="slider3Value" class="sliderValue">1</div>
+        </div>
+        
+        <div class="sliderContainer">
+          <label for="slider4">Сила тока на четвертом проводнике:</label>
+          <input type="range" min="-10" max="10" value="1" step="0.1" id="slider4">
+          <div id="slider4Value" class="sliderValue">1</div>
+        </div>
+    </div>
+    
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const circles = [];
+
+    for (let i = 0; i < 4; ++i) {
+      const circleGeometry = new THREE.CircleGeometry(0.3, 32);
+      const circleMaterial = new THREE.MeshBasicMaterial({ color: 0x6c92af });
+      const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+      if(i==0) { circle.position.x = -3; circle.position.y = -3; }
+      if(i==1) { circle.position.x = -3; circle.position.y = 3; }
+      if(i==2) { circle.position.x = 3; circle.position.y = -3; }
+      if(i==3) { circle.position.x = 3; circle.position.y = 3; }
+      circles.push(circle);
+      scene.add(circle);
+      circles[i].visible = false;
+    }
+
+    const toggleCircle = (index) => {
+      circles[index].visible = !circles[index].visible;
+    };
+
+    document.getElementById('toggleCircle1').addEventListener('click', () => {
+        toggleCircle(0);
+        updateArrowsFor();
+    });
+    document.getElementById('toggleCircle2').addEventListener('click', () => {
+      toggleCircle(1);
+      updateArrowsFor();
+    });
+    document.getElementById('toggleCircle3').addEventListener('click', () => {
+      toggleCircle(2);
+      updateArrowsFor();
+    });
+    document.getElementById('toggleCircle4').addEventListener('click', () => {
+      toggleCircle(3);
+      updateArrowsFor();
+    });
+
+    const arrows = [];
+    for (let i = -8; i <= 8; i += 0.5) {
+      for (let j = -5; j <= 5; j += 0.5) {
+        const direction = new THREE.Vector3(i, j, 0);
+        const origin = new THREE.Vector3(0, 0, 1);
+        
+        const resultVector = new THREE.Vector3();
+        resultVector.crossVectors(origin, direction);
+        
+        const arrowHelper = new THREE.ArrowHelper(resultVector.normalize(), direction, resultVector.length() / 2, 0xff0000);
+        
+        scene.add(arrowHelper);
+        arrows.push(arrowHelper);
+      }
+    }
+
+    let Currents = [1, 1, 1, 1];
+    
+    function updateCurrents() {
+      Currents[0] = parseFloat(document.getElementById('slider1').value);
+      Currents[1] = parseFloat(document.getElementById('slider2').value);
+      Currents[2] = parseFloat(document.getElementById('slider3').value);
+      Currents[3] = parseFloat(document.getElementById('slider4').value);
+      updateArrowsFor();
+    }
+    
+    function updateSliderValues() {
+      document.getElementById('slider1Value').textContent = document.getElementById('slider1').value;
+      document.getElementById('slider2Value').textContent = document.getElementById('slider2').value;
+      document.getElementById('slider3Value').textContent = document.getElementById('slider3').value;
+      document.getElementById('slider4Value').textContent = document.getElementById('slider4').value;
+    }
+    
+    document.getElementById('slider1').addEventListener('input', () => {
+      updateCurrents();
+      updateSliderValues();
+    });
+    document.getElementById('slider2').addEventListener('input', () => {
+      updateCurrents();
+      updateSliderValues();
+    });
+    document.getElementById('slider3').addEventListener('input', () => {
+      updateCurrents();
+      updateSliderValues();
+    });
+    document.getElementById('slider4').addEventListener('input', () => {
+      updateCurrents();
+      updateSliderValues();
+    });
+
+    function distance(p1, p2) {
+      return Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2);
+    }
+
+    function updateArrowsFor() {
+    let k = 0;
+    for (let i = -8; i <= 8; i += 0.5) {
+        for (let j = -5; j <= 5; j += 0.5) {
+            const origin = new THREE.Vector3(0, 0, 1);
+            const direction = new THREE.Vector3(i, j, 0);
+
+            let finalVector = new THREE.Vector3();
+
+            for(let m = 0; m < 4; m++) {
+                if(circles[m].visible) {
+                    const circlePosition = circles[m].position;
+                    const distanceSquared = direction.distanceToSquared(circlePosition);
+                    const distanceCubed = distanceSquared * Math.sqrt(distanceSquared);
+                    const current = Currents[m];
+
+                    const magneticFieldX = current * (circlePosition.y - j) / distanceCubed;
+                    const magneticFieldY = -current * (circlePosition.x - i) / distanceCubed;
+
+                    finalVector.x += magneticFieldX;
+                    finalVector.y += magneticFieldY;
+                }
+            }
+
+            arrows[k].position.copy(direction);
+            arrows[k].setDirection(finalVector.normalize());
+            arrows[k].setLength(finalVector.length() / 2);
+            k++;
+        }
+    }
+}
+
+
+    var isDragging = false;
+    var isSelected = false;
+    var Selected = -1;
+
+    function getMousePosition(event) {
+        if (!isDragging) return;
+
+        var mouseX = event.clientX;
+        var mouseY = event.clientY;
+
+        var rect = renderer.domElement.getBoundingClientRect();
+
+        var x = (mouseX - rect.left) / rect.width * 2 - 1;
+        var y = - (mouseY - rect.top) / rect.height * 2 + 1;
+
+        var mouseVector = new THREE.Vector2(x, y);
+        var raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouseVector, camera);
+        
+        for (var i = 0; i < circles.length; i++) {
+            var intersects = raycaster.intersectObject(circles[i]);
+            if (intersects.length > 0) {
+                isSelected = true;
+                Selected = i;
+                var intersection = intersects[0];
+                circles[i].position.copy(intersection.point);
+                break;
+            }
+        }
+
+        if (isSelected && circles[Selected].visible) {
+          var plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+
+          var intersection = new THREE.Vector3();
+          raycaster.ray.intersectPlane(plane, intersection);
+
+          circles[Selected].position.copy(intersection);
+        }
+        updateArrowsFor();
+    }
+
+    function onMouseMove(event) {
+        getMousePosition(event);
+    }
+
+    function onMouseUp(event) {
+        isDragging = false;
+        isSelected = false;
+        Selected = -1;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        updateArrowsFor();
+    }
+
+    renderer.domElement.addEventListener('mousedown', function(event) {
+        isDragging = true;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        updateArrowsFor();
+    });
+
+    camera.position.z = 5;
+    const animate = function () {
+      requestAnimationFrame(animate);
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+  </script>
+</body>
+</html>

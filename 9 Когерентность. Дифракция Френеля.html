@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Птицын Влад ДЗ М3203</title>
+    <style>
+        #input-container { text-align: center; margin-top: 20px; }
+        #input-container div { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div id="input-container">
+        <div>
+            <label for="radius">Радиус линзы, м: </label>
+            <input type="number" id="radius" class="radius" value="1">
+        </div>
+        <div>
+            <label for="prelom_lens">Показатель преломления линзы: </label>
+            <input type="number" id="prelom_lens" class="prelom_lens" value="2">
+        </div>
+        <div>
+            <label for="prelom_plate">Показатель преломления пластины: </label>
+            <input type="number" id="prelom_plate" class="prelom_plate" value="3">
+        </div>
+        <div>
+            <label for="prelom_env">Показатель преломления среды: </label>
+            <input type="number" id="prelom_env" class="prelom_env" value="1">
+        </div>
+        <div>
+            <label for="length">Длина волны, м: </label>
+            <input type="number" id="length" class="length" value="500">
+        </div>
+        <div>
+            <button onclick="updateGraph(false)">Обновить визуализацию</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+        camera.position.z = 5;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize( window.innerWidth, window.innerHeight);
+        scene.background = new THREE.Color( 0xffffff );
+        document.body.appendChild( renderer.domElement );
+
+        let circles = [];
+        let circle_unique;
+        updateGraph(true);
+
+        function rgbToHex(r, g, b) {
+            return (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1);
+        }
+        
+        function updateGraph(flag) {
+            let radius = parseFloat(document.querySelector('.radius').value);
+            let prelom_lens = parseFloat(document.querySelector('.prelom_lens').value);
+            let prelom_plate = parseFloat(document.querySelector('.prelom_plate').value);
+            let prelom_env = parseFloat(document.querySelector('.prelom_env').value);
+            let length = parseFloat(document.querySelector('.length').value);
+
+            if (isNaN(radius) || radius <= 0 || isNaN(prelom_lens) || prelom_lens < 1 || isNaN(prelom_plate) || prelom_plate < 1 || isNaN(prelom_env) || prelom_env < 1 || isNaN(length) || length < 0) {
+                alert("введены некорректные значения");
+                return;
+            }
+
+            length = length * 1e-9;
+            let koef_r = Math.pow((prelom_plate - prelom_env)/(prelom_plate + prelom_env), 2);
+            let I0 = 1;
+            let values = [];
+            let k = 2 * Math.PI / length;
+            let koef_t = 4 * prelom_lens * prelom_env /(Math.pow((prelom_lens + prelom_env), 2));
+            
+            for (let i = 0, count = 1; i <= 0.001; i += 0.000001, ++count) {
+                
+                let I1 = I0 * koef_t * koef_t * koef_r;
+                let I2 = I0 * koef_r;
+
+                let opt_dif = 2 * (i * i / (2 * radius)) * prelom_env + length / 2;
+                let I = I1 + I2 + 2 * I0 * koef_r * koef_t * Math.cos(k * opt_dif);
+
+                values.push(I);
+            }
+
+            const rgbColor_circ = 255 * values[30] / I0;
+            const hexColor_circ = "0x" + rgbToHex(rgbColor_circ, rgbColor_circ, rgbColor_circ);
+            let radius_circ = Math.sqrt((1 - 0.5) * length * radius / prelom_env);
+
+            if (flag == true) {
+                    var geometry_circ = new THREE.CircleGeometry (
+                        radius_circ*500, 360
+                    );
+                    var material_circ = new THREE.MeshBasicMaterial({ color: parseInt(hexColor_circ, 16) });
+                    circle_unique = new THREE.Mesh( geometry_circ, material_circ );
+                    scene.add(circle_unique);        
+                } 
+                
+                circle_unique.geometry = new THREE.CircleGeometry (
+                        radius_circ*500, 360
+                );
+
+                circle_unique.material.color.set(parseInt(hexColor_circ, 16));
+
+            for (let i = 0, count = 1; i < values.length; i += 15, ++count) {
+                let innerRadius = Math.sqrt((count - 0.5) * length * radius / prelom_env);
+                let outherRadius = Math.sqrt((count + 0.5) * length * radius / prelom_env);
+            
+                const rgbColor = 255 * values[i] / I0;
+                const hexColor = "0x" + rgbToHex(rgbColor, rgbColor, rgbColor);
+                
+                if(flag == true) {
+                    var geometry = new THREE.RingGeometry (
+                        innerRadius*500, outherRadius*500,
+                        360, 360
+                    );
+                    var material = new THREE.MeshBasicMaterial({ color: parseInt(hexColor, 16) });
+                    const circle = new THREE.Mesh( geometry, material );
+                    circles.push(circle);
+                    scene.add(circle);        
+                } 
+                
+                circles[count - 1].geometry = new THREE.RingGeometry (
+                    innerRadius*500, outherRadius*500,
+                    360, 360
+                );
+
+                circles[count - 1].material.color.set(parseInt(hexColor, 16));
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame( animate );
+            renderer.render( scene, camera );
+        }
+
+        animate();
+    </script>
+</body>
+</html>

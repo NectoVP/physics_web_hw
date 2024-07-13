@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Птицын Влад ДЗ М3203</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #input-container { text-align: center; margin-top: 20px; }
+        #input-container div { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div id="input-container">
+        <div>
+            <label for="Amount">Количество щелей, N: </label>
+            <input type="number" id="Amount" class="Amount" value="4">
+        </div>
+        <div>
+            <label for="Size">Размер щели, мм: </label>
+            <input type="number" id="Size" class="Size" value="0.1">
+        </div>
+        <div>
+            <label for="Period">Период, мм: </label>
+            <input type="number" id="Period" class="Period" value="0.1">
+        </div>
+        <div>
+            <label for="Length">Длина волны, нм: </label>
+            <input type="number" id="Length" class="Length" value="600">
+        </div>
+        <div>
+            <label for="Distance">Расстояние до экрана, м: </label>
+            <input type="number" id="Distance" class="Distance" value="5">
+        </div>
+        <div>
+            <label for="Screen">Ширина экрана, м: </label>
+            <input type="number" id="Screen" class="Screen" value="5">
+        </div>
+        <div>
+            <button>Построить график</button>
+        </div>
+    </div>
+
+    <div id="graph-container">
+        <div class="graph" id="graph"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        document.querySelector('button').onclick = updateGraph;
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        scene.background = new THREE.Color(0xffffff);
+        document.body.appendChild(renderer.domElement);
+
+        let rects = [];
+
+        function updateGraph() {
+            rects.forEach(rect => scene.remove(rect));
+            rects = [];
+
+            let amount = parseFloat(document.querySelector('.Amount').value);
+            let size = parseFloat(document.querySelector('.Size').value);
+            let period = parseFloat(document.querySelector('.Period').value);
+            let length = parseFloat(document.querySelector('.Length').value);
+            let distance = parseFloat(document.querySelector('.Distance').value);
+            let screen = parseFloat(document.querySelector('.Screen').value);
+            
+            length = length * 1e-9;
+            period = period * 1e-3;
+            size = size * 1e-3;
+
+            if (isNaN(amount) || amount <= 0 || isNaN(size) || size <= 0 || isNaN(period) || period < 0 || isNaN(length) || length < 0 || isNaN(distance) || distance < 0 || isNaN(screen) || screen < 0) {
+                alert("введены некорректные значения");
+                return;
+            }
+
+            let k = 0.01;
+            const xValues = [];
+            const yValues = [];
+
+            let I0 = 1;
+
+            for (let i = -screen / 2; i <= screen / 2; i += k) {
+                const temp = Math.abs(i) / Math.sqrt(i * i + distance * distance);
+                if (temp == 0) {
+                    xValues.push(i);
+                    yValues.push(I0);
+                    continue;
+                }
+                let difr = Math.PI * temp * size / length * Math.PI / 180;
+                let interf = Math.PI * temp * period / length * Math.PI / 180;
+                const I = I0 * Math.pow((Math.sin(difr) / difr), 2) * Math.pow((Math.sin(amount * interf) / Math.sin(interf)), 2);
+                
+                xValues.push(i);
+                yValues.push(I);
+            }
+
+            for (let i = 0; i < yValues.length; ++i) {
+                const intensity = Math.min(255, Math.max(0, 255 * yValues[i] / I0));
+                const hexColor = `0x${Math.floor(intensity).toString(16).padStart(2, '0').repeat(3)}`;
+
+                var geometry = new THREE.PlaneGeometry(k*2.5, 4);
+                var material = new THREE.MeshBasicMaterial({ color: parseInt(hexColor, 16) });
+                const rect = new THREE.Mesh(geometry, material);
+                rect.position.x = xValues[i]*2.5;
+                rects.push(rect);
+                scene.add(rect);
+            }
+
+            Plotly.newPlot('graph', [{
+                x: xValues,
+                y: yValues,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'red', shape: 'spline' }
+            }], {
+                title: 'График зависимости интенсивности от координаты на экране',
+                xaxis: { title: { text: 'X, м' } },
+                yaxis: { title: { text: 'Интенсивность, Вт/м^2' } },
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+        updateGraph();
+    </script>
+</body>
+</html>
